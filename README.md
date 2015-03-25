@@ -59,7 +59,7 @@ A replacement for rm that moves files to a trash directory instead of removing t
 
 ##Maintenance
 
-Maintenence (clearing trash dir of expired files) is done when rm is called. A job forks into the background so you don't have to deal with a delay.  If you use rm infrequently you may want to schedule a periodic run of rm --maintenance.
+Maintenance (clearing trash dir of expired files) is done when rm is called. A job forks into the background so you don't have to deal with a delay.  If you use rm infrequently you may want to schedule a periodic run of rm --maintenance.
 
   
 ##Rules parsing
