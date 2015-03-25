@@ -384,7 +384,7 @@ if '__main__' == __name__:
         exit()
 
     if cloptions.paths:
-        print"-" * 60)
+        print("-" * 60)
         print("\tDefined paths")
         print("-" * 60)
         for x in options:
