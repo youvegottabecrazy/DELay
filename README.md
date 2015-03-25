@@ -72,24 +72,24 @@ An example of how the rules parsing works.
             b.  apply any rules found in ${path}/.delayrmrc file
  
         Example, as user "syd":
-                  /home/syd/.delay/.delayrc contains:  
+                  /home/syd/.delayrm/.delayrmrc contains:  
                         [default settings]
                         ttl_hours = 10
-                        trash_dir = /home/syd/.delay
+                        trash_dir = /home/syd/.delayrm
                         
                         [/home/music]
                         ttl_hours = 50
                         trash_dir = /tmp/garbage
  
-                  /home/music/pinkfloyd/.delayrc contains:  
+                  /home/music/pinkfloyd/.delayrmrc contains:  
                         trash_dir = /home/music/.pinkfloydtrash
   
-                  /home/music/pinkfloyd/wywh/.delayrc contains:  
+                  /home/music/pinkfloyd/wywh/.delayrmrc contains:  
                         disabled = True
  
        Calculated rules for rm /home/syd/royharper.txt:
             ttl_hours = 10
-            trash_dir = /home/syd/.delay
+            trash_dir = /home/syd/.delayrm
  
        Calculated rules for rm /home/music/whatdoesthefoxsay.mp4:
             ttl_hours /= 50
