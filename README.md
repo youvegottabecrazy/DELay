@@ -16,7 +16,8 @@ A replacement for rm that moves files to a trash directory instead of removing t
 * Supports restoring removed files. 
 
 * Keeps a small sqlite3 db in the trash dir.
-    
+ 
+* See the example.txt file for a lame demonstration.   
 
 ## Installation
 
