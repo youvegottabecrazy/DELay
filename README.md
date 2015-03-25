@@ -34,10 +34,6 @@ A replacement for rm that moves files to a trash directory instead of removing t
 
 5. When removing a file, DELay will first load the main .delayrmrc file, and will then load all .delayrmrc files found in the rm'ed file's path.  The settings found in each local .delayrmrc file will cascade to all sub-directories.  To generate a local .delayrmrc file in the current directory, use the --create_local_rc option.
 
-##Maintenance
-
-Maintenence (clearing trash dir of expired files) is done when rm is called. A job forks into the background so you don't have to deal with a delay.  If you use rm infrequently you may want to schedule a periodic run of rm --maintenance.
-
 ## Options
 
     Switches (from rm):   
@@ -59,8 +55,16 @@ Maintenence (clearing trash dir of expired files) is done when rm is called. A j
         --create_local_rc   Create a local .delayrc file in the current directory
         --about             about
  
+
+##Maintenance
+
+Maintenence (clearing trash dir of expired files) is done when rm is called. A job forks into the background so you don't have to deal with a delay.  If you use rm infrequently you may want to schedule a periodic run of rm --maintenance.
+
   
-##Rules parsing:
+##Rules parsing
+
+An example of how the rules parsing works.
+
         1.  Start with everything specified in [#main] section of main .delayrmrc file
         2.  for each dir in the path, starting with '/':
             a.  apply any rules found in matching [/dir/] section of main .delayrmrc file
