@@ -17,25 +17,31 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # ------------------------------------------------------------------------------
 #-- imports
-import time, sys, os, shutil, sqlite3, ConfigParser, subprocess
+import time, sys, os, shutil, sqlite3, subprocess
 from optparse import OptionParser
 
+# different module name for python >= 3
+try:
+    import ConfigParser
+except ImportError as e:
+    import configparser as ConfigParser
+    
 __version__ = "1.0"
 script_path, script_filename = os.path.split(os.path.realpath(sys.argv[0]))
 if os.getenv("DELAYRMRC"): config_file = os.getenv("DELAYRMRC")
 else: config_file = os.path.join(os.getenv("HOME", '~'), ".delayrm", '.delayrmrc')
 db = None
 options = None
-sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0) 
+#sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0) 
 
 def vprint(msg):
     if get_setting('verbose'):
-        print "%s" % (msg)
+        print("%s" % (msg))
 
 def init():
     read_config()
     if not os.path.isdir(get_setting('trash_dir')):
-        print "Created directory %s" % get_setting('trash_dir')
+        print("Created directory %s" % get_setting('trash_dir'))
         os.mkdir(get_setting('trash_dir'))
     global db
     db = sqlite3.connect(os.path.join(get_setting('trash_dir'), '.delayrm.sqlite3'))
@@ -43,8 +49,8 @@ def init():
     cur = db.cursor()
     try:
         cur.execute("CREATE TABLE IF NOT EXISTS files(id INTEGER PRIMARY KEY, trash_dir TEXT, original_location TEXT, trash_location TEXT, removed_ts REAL, purge_ts REAL, type TEXT, bytes INTEGER)")
-    except Exception, e:
-        print "error in db_init() %s " % e
+    except Exception as e:
+        print("error in db_init() %s " % e)
 
 def move_file(fn, filetype, **opts):
     (path, filename) = fn.rsplit("/", 1)
@@ -52,7 +58,7 @@ def move_file(fn, filetype, **opts):
     if opts['interactive'] and not opts['force']:
         a = raw_input("Move '%s' to trash? (y/N)> " % fn)
         if a not in ['y', 'Y', 'yes']:
-            print "%s Not removed" % fn
+            print("%s Not removed" % fn)
             return;
     if not os.path.isdir(dest_dir): os.makedirs(dest_dir)
     if os.path.exists(os.path.join(dest_dir, filename)):
@@ -61,13 +67,13 @@ def move_file(fn, filetype, **opts):
     mybytes = os.path.getsize(fn)
 
     if opts['stash'] and filetype == 'dir':
-        print "cp %s -> %s" % (fn, new_file)
+        print("cp %s -> %s" % (fn, new_file))
         shutil.copytree(fn, new_file)
     elif opts['stash']:
-        print "cp %s -> %s" % (fn, new_file)
+        print("cp %s -> %s" % (fn, new_file))
         shutil.copy(fn, new_file)
     else: 
-        print "mv %s -> %s" % (fn, new_file)
+        print("mv %s -> %s" % (fn, new_file))
         shutil.move(fn, new_file)
 
     cur = db.cursor()
@@ -95,10 +101,10 @@ def cleanup(background=False, purge=False, explicit=False):
         trashdirs.append(r['trash_dir'])
         if os.path.lexists(r['trash_location']):
             if r['type'] != 'dir':
-                if explicit and not background: print "unlinking %s" % r['trash_location']
+                if explicit and not background: print("unlinking %s" % r['trash_location'])
                 os.unlink(r['trash_location'])
         
-        if explicit and not background: print "deleting from db: %s" % r['trash_location']
+        if explicit and not background: print("deleting from db: %s" % r['trash_location'])
         cur.execute("DELETE FROM files WHERE id = ?", (r['id'],))
     for trashdir in trashdirs:
         for root, dirs, files in os.walk(trashdir, topdown=False):
@@ -111,12 +117,12 @@ def cleanup(background=False, purge=False, explicit=False):
 def rmdir_if_empty(dir, explicit=False, background=False):
     try: 
         os.rmdir (dir)
-        if explicit and not background: print "rmdir %s" % dir
-    except OSError, e:
+        if explicit and not background: print("rmdir %s" % dir)
+    except OSError as e:
         if e.errno == 39: return False  # dir not empty
-        else:  print "OSError exception while removing directory: %s" % e
-    except Exception, e:
-        print "Exception while removing directory: %s" % e
+        else:  print("OSError exception while removing directory: %s" % e)
+    except Exception as e:
+        print("Exception while removing directory: %s" % e)
  
 def get_setting(setting_name, path=None, include_source = False):
     s = None
@@ -136,7 +142,7 @@ def get_setting(setting_name, path=None, include_source = False):
             if path not in options['rcfiles']:
                 options['rcfiles'][path] = dict()
                 if os.path.exists(os.path.join(path, '.delayrmrc')):
-                    vprint ("found config file at %s" % path)
+                    vprint("found config file at %s" % path)
                     c = ConfigParser.ConfigParser()
                     c.read(os.path.join(path, '.delayrc'))
                     options['rcfiles'][path]['source'] = os.path.join(path, '.delayrc')
@@ -151,24 +157,24 @@ def get_setting(setting_name, path=None, include_source = False):
 def restore_file(id):
     cur = db.cursor()
     r = cur.execute("SELECT * FROM files WHERE id = ?", (id,)).fetchone()
-    if not r: print "File with id %s not found." % id
+    if not r: print("File with id %s not found." % id)
     else:
         d = r['original_location'].rsplit('/', 1)[0]
         if not os.path.isdir(d): os.makedirs(d)
         if os.path.isfile(r['original_location']):
             a = raw_input("%s exists.  Overwrite? (y/N)> " % r['original_location'])
             if a not in ['y', 'Y', 'yes']:
-                print "%s Not restored" % r['original_location']
+                print("%s Not restored" % r['original_location'])
                 return;
         shutil.move(r['trash_location'], r['original_location'])
-        print "%s -> %s" % (r['trash_location'], r['original_location'])
+        print("%s -> %s" % (r['trash_location'], r['original_location']))
         cur.execute("DELETE FROM files WHERE id = ?", (id,))
 
 
 def create_local_config(path):
     fn = os.path.join(path, '.delayrc')
     if os.path.isfile(fn):
-        print "Error: %s already exists."  % fn
+        print("Error: %s already exists."  % fn)
         sys.exit()
 
     config = ConfigParser.RawConfigParser(allow_no_value = True)
@@ -185,7 +191,7 @@ def create_local_config(path):
 
     with open(fn, 'wb') as cf:
         config.write(cf)
-    print "Local config file written to %s" % fn
+    print("Local config file written to %s" % fn)
  
    
 def create_config():
@@ -225,7 +231,7 @@ def create_config():
 
     with open(config_file, 'wb') as cf:
         config.write(cf)
-    print "Config file written to %s" % config_file
+    print("Config file written to %s" % config_file)
 
 
 def read_config():
@@ -328,16 +334,16 @@ if '__main__' == __name__:
     (cloptions, files) = parser.parse_args()
 
     if cloptions.about:
-        print "*" * 80
-        print "What:   This is delay, or DEL-ay, an rm wrapper that delays file removal."
-        print "Why:    So you don't accidentally delete something, dummy."
-        print "Where:  Locally installed at %s" % os.path.realpath(sys.argv[0]) 
-        print "        Config file should be at %s" % config_file
+        print("*" * 80)
+        print("What:   This is delay, or DEL-ay, an rm wrapper that delays file removal.")
+        print("Why:    So you don't accidentally delete something, dummy.")
+        print("Where:  Locally installed at %s" % os.path.realpath(sys.argv[0]))
+        print("        Config file should be at %s" % config_file)
         for d in get_trash_dirs():
-            print "        + Trash dir: %s" % d
-        print "        Born free & GPLv3 @ https://github.com/youvegottabecrazy/DELay"
-        print "\"Qui tacet consentire videtur, ubi loqui debuit ac potuit.\" http://is.gd/eloqui"
-        print "*" * 80
+            print("        + Trash dir: %s" % d)
+        print("        Born free & GPLv3 @ https://github.com/youvegottabecrazy/DELay")
+        print("\"Qui tacet consentire videtur, ubi loqui debuit ac potuit.\" http://is.gd/eloqui")
+        print("*" * 80)
         exit()
 
     if cloptions.create_local_rc:
@@ -346,63 +352,63 @@ if '__main__' == __name__:
 
     if cloptions.explain:
         fn = os.path.abspath(files[0])
-        print "Full Path: %s" % fn
+        print("Full Path: %s" % fn)
         if get_setting("global_disable"):
-            print "DELay is globally disabled.  All commands passed to %s" % get_setting("rm_executable")
+            print("DELay is globally disabled.  All commands passed to %s" % get_setting("rm_executable"))
             exit(nocleanup=True)
         else:
             s, src = get_setting("disabled", path=fn, include_source=True)
             if s:
-                print "Disabled. (from: %s)" % src
+                print("Disabled. (from: %s)" % src)
             else: 
                 s, src = get_setting('trash_dir', path=fn, include_source=True)
-                print "Trash Dir: %s. (from: %s)" % (s, src)
+                print("Trash Dir: %s. (from: %s)" % (s, src))
                 s, src = get_setting('ttl_hours', path=fn, include_source=True)
-                print "TTL (hours): %s. (from: %s)" % (s, src)
+                print("TTL (hours): %s. (from: %s)" % (s, src))
             exit()       
 
     if cloptions.status:
         cur = db.cursor()
         num_files = cur.execute("SELECT COUNT(*) as c from files").fetchone()[0]
         size = cur.execute("SELECT COALESCE(SUM(bytes),0) from files").fetchone()[0]
-        print '-' * 60
-        print "\tOVERALL: %s mb\tin %s files" % (size /1024/1024, num_files)
-        print '-' * 60
-        print "details:"
+        print('-' * 60)
+        print("\tOVERALL: %s mb\tin %s files" % (size /1024/1024, num_files))
+        print('-' * 60)
+        print("details:")
         mydirs = get_trash_dirs()
         for x in mydirs:
             num_files = cur.execute("SELECT COUNT(*) as c from files where trash_dir = ?", (x,)).fetchone()[0]
             size = cur.execute("SELECT COALESCE(SUM(bytes),0) from files where trash_dir = ?", (x,)).fetchone()[0]
-            print "%s mb\tin %s files\t in %s" % (size /1024/1024, num_files, x)
-        print ""
+            print("%s mb\tin %s files\t in %s" % (size /1024/1024, num_files, x))
+        print()
         exit()
 
     if cloptions.paths:
-        print "-" * 60
-        print "\tDefined paths"
-        print "-" * 60
+        print"-" * 60)
+        print("\tDefined paths")
+        print("-" * 60)
         for x in options:
-            print "%s hours \t%s" % (get_setting('ttl_hours', x), x)
+            print("%s hours \t%s" % (get_setting('ttl_hours', x), x))
         exit()
 
     if cloptions.list_files:
         cur = db.cursor()
         cur.execute("SELECT * from files ORDER BY trash_dir")
-        print "id\tmb\tttl(hr)\tfilename"
-        print '-' * 80
+        print("id\tmb\tttl(hr)\tfilename")
+        print('-' * 80)
         for r in cur.fetchall():
             fn = r['trash_location']
             if not cloptions.full_display:
                 fn = fn.rsplit('/', 1)[1]
             until_delete = int((r['purge_ts'] - time.time())/3600)
-            print "%s\t%s\t%s\t%s" % (r['id'],r['bytes']/1024/1024, until_delete, fn)
+            print("%s\t%s\t%s\t%s" % (r['id'],r['bytes']/1024/1024, until_delete, fn))
         exit()       
 
     if cloptions.restore:
         if files:
             for id in files:
                 restore_file(id)
-        else: print "Specify the id's of the files you want to restore. Space separated list." 
+        else: print("Specify the id's of the files you want to restore. Space separated list." )
         db.commit()
         exit()
 
@@ -415,11 +421,11 @@ if '__main__' == __name__:
         exit(nocleanup=True)
 
     if cloptions.maintenance:
-        print "Performing maintenance operations in background."
+        print("Performing maintenance operations in background.")
         exit()
 
     if cloptions.purge:
-        print "purging trash dir"
+        print("purging trash dir")
         cleanup(purge=cloptions.purge, explicit=cloptions.explicit)
         db.commit()
         exit(nocleanup=True)
@@ -437,27 +443,27 @@ if '__main__' == __name__:
         for f in files:
             fn = os.path.abspath(f)
             if fn.startswith(get_setting('trash_dir')):
-                vprint ("real rm on file in trash dir: %s" % fn)
+                vprint("real rm on file in trash dir: %s" % fn)
                 os.unlink(fn)
                 cur = db.cursor()
                 cur.execute("DELETE FROM files WHERE trash_location = ?", (fn,))
             
             elif os.path.islink(fn):
-                vprint ("symlink: %s"  % fn )
+                vprint("symlink: %s"  % fn )
                 move_file(fn, 'link', **vars(cloptions))
 
             elif os.path.isdir(fn):
                 if cloptions.force: move_file(fn, 'dir', **vars(cloptions))
-                else: print "%s: is directory. Use -f to force." % fn
+                else: print("%s: is directory. Use -f to force." % fn)
         
             elif os.path.isfile(fn):
-                vprint ("file: %s" % fn)
+                vprint("file: %s" % fn)
                 move_file(fn, 'file', **vars(cloptions))
             
             else:
-                vprint ("not a file: %s"  % fn)
-                print "%s: cannot remove '%s': No such file or directory" % (os.path.join(script_path, script_filename), fn)
+                vprint("not a file: %s"  % fn)
+                print("%s: cannot remove '%s': No such file or directory" % (os.path.join(script_path, script_filename), fn))
     else:
-        print "%s: missing operand." % script_filename
-        print "try rm --help for more information"
+        print("%s: missing operand." % script_filename)
+        print("try rm --help for more information")
     exit()
