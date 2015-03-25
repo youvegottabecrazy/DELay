@@ -41,6 +41,7 @@ A replacement for rm that moves files to a trash directory instead of removing t
         -i (interactive)
  
     Switches (unique to DELay):
+        --help              show this dialog.
         --status            show status of trash directories.
         --paths             show options for each path specified in config file
         --list              list all deleted files
@@ -53,7 +54,7 @@ A replacement for rm that moves files to a trash directory instead of removing t
         --explain           show the rules that will be applied to a particular file
         --stash             don't delete the file, but make a copy of it.
         --create_local_rc   Create a local .delayrc file in the current directory
-        --about             about
+        --about             about the script
  
 
 ##Maintenance
