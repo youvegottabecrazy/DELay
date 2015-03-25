@@ -24,7 +24,7 @@ A replacement for rm that moves files to a trash directory instead of removing t
 
 2.  The default trash dir is $HOME/.delayrm. $HOME/.delayrm/.delayrmrc will be created on first run.  If you'd like to use a different location, set ENV{DELAYRMRC} to the full path of the .delayrmrc file.  Run the script once to generate the default rc file. 
 
-3.  Edit the generated .delayrc file as desired.
+3.  Edit the generated .delayrmrc file as desired.
 
 4. It's best to use the script via shell alias.  If using bash, add the following line to .bashrc:
 
