@@ -372,7 +372,7 @@ if '__main__' == __name__:
         num_files = cur.execute("SELECT COUNT(*) as c from files").fetchone()[0]
         size = cur.execute("SELECT COALESCE(SUM(bytes),0) from files").fetchone()[0]
         print('-' * 60)
-        print("\tOVERALL: %s mb\tin %s files" % (size /1024/1024, num_files))
+        print("\tOVERALL: %s mb\tin %s files" % (int(size/1024/1024), num_files))
         print('-' * 60)
         print("details:")
         mydirs = get_trash_dirs()
