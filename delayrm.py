@@ -379,7 +379,7 @@ if '__main__' == __name__:
         for x in mydirs:
             num_files = cur.execute("SELECT COUNT(*) as c from files where trash_dir = ?", (x,)).fetchone()[0]
             size = cur.execute("SELECT COALESCE(SUM(bytes),0) from files where trash_dir = ?", (x,)).fetchone()[0]
-            print("%s mb\tin %s files\t in %s" % (size /1024/1024, num_files, x))
+            print("%s mb\tin %s files\t in %s" % (int(size /1024/1024), num_files, x))
         print()
         exit()
 
@@ -401,7 +401,7 @@ if '__main__' == __name__:
             if not cloptions.full_display:
                 fn = fn.rsplit('/', 1)[1]
             until_delete = int((r['purge_ts'] - time.time())/3600)
-            print("%s\t%s\t%s\t%s" % (r['id'],r['bytes']/1024/1024, until_delete, fn))
+            print("%s\t%s\t%s\t%s" % (r['id'], int(r['bytes']/1024/1024), until_delete, fn))
         exit()       
 
     if cloptions.restore:
