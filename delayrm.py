@@ -45,6 +45,7 @@ def init():
         os.mkdir(get_setting('trash_dir'))
     global db
     db = sqlite3.connect(os.path.join(get_setting('trash_dir'), '.delayrm.sqlite3'))
+    db.text_factory = str
     db.row_factory = sqlite3.Row
     cur = db.cursor()
     try:
@@ -66,6 +67,25 @@ def move_file(fn, filetype, **opts):
     new_file = os.path.join(dest_dir, filename)
     mybytes = os.path.getsize(fn)
 
+    try:
+        cur = db.cursor()
+        if filetype != 'dir':
+            purge_ts = time.time() + get_setting('ttl_hours', fn) * 3600 
+            trash_dir = get_setting('trash_dir', fn)
+            cur.execute("INSERT INTO files(trash_dir, original_location, trash_location, removed_ts, purge_ts, type, bytes) VALUES (?,?,?,?,?,?,?)", (trash_dir, fn, new_file, time.time(), purge_ts , filetype, mybytes))
+        else:
+            for root, dirs, files in os.walk(new_file):
+                for name in files:
+                    mybytes = os.path.getsize(os.path.join(root,name))
+                    mytype = 'file'
+                    purge_ts = time.time() + get_setting('ttl_hours', fn) * 3600 
+                    trash_dir = get_setting('trash_dir', fn)
+                    if os.path.islink(fn): mytype = 'link'
+                    cur.execute("INSERT INTO files(trash_dir, original_location, trash_location, removed_ts, purge_ts, type, bytes) VALUES (?,?,?,?,?,?,?)", (trash_dir, os.path.join(fn, name), os.path.join(root, name), time.time(), purge_ts, mytype, mybytes))
+    except Exception as e:
+        print("Exception: %s" % e)
+        return
+
     if opts['stash'] and filetype == 'dir':
         print("cp %s -> %s" % (fn, new_file))
         shutil.copytree(fn, new_file)
@@ -75,21 +95,6 @@ def move_file(fn, filetype, **opts):
     else: 
         print("mv %s -> %s" % (fn, new_file))
         shutil.move(fn, new_file)
-
-    cur = db.cursor()
-    if filetype != 'dir':
-        purge_ts = time.time() + get_setting('ttl_hours', fn) * 3600 
-        trash_dir = get_setting('trash_dir', fn)
-        cur.execute("INSERT INTO files(trash_dir, original_location, trash_location, removed_ts, purge_ts, type, bytes) VALUES (?,?,?,?,?,?,?)", (trash_dir, fn, new_file, time.time(), purge_ts , filetype, mybytes))
-    else:
-        for root, dirs, files in os.walk(new_file):
-            for name in files:
-                mybytes = os.path.getsize(os.path.join(root,name))
-                mytype = 'file'
-                purge_ts = time.time() + get_setting('ttl_hours', fn) * 3600 
-                trash_dir = get_setting('trash_dir', fn)
-                if os.path.islink(fn): mytype = 'link'
-                cur.execute("INSERT INTO files(trash_dir, original_location, trash_location, removed_ts, purge_ts, type, bytes) VALUES (?,?,?,?,?,?,?)", (trash_dir, os.path.join(fn, name), os.path.join(root, name), time.time(), purge_ts, mytype, mybytes))
 
 
 def cleanup(background=False, purge=False, explicit=False):
